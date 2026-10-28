@@ -1,6 +1,7 @@
 package jp.co.sss.lms.ct.f03_report;
 
 import static jp.co.sss.lms.ct.util.WebDriverUtils.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -9,6 +10,8 @@ import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 
 /**
  * 結合テスト レポート機能
@@ -35,49 +38,164 @@ public class Case08 {
 	@Order(1)
 	@DisplayName("テスト01 トップページURLでアクセス")
 	void test01() {
-		// TODO ここに追加
+		// トップページへアクセスする
+		goTo("http://localhost:8080/lms");
+
+		// ページタイトルが「ログイン | LMS」であることを確認する
+		assertEquals("ログイン | LMS", webDriver.getTitle());
+
+		// ログインボタンの要素、value属性（入力値）を取得し表示欄が「ログイン」であることを確認する
+		WebElement inputElement = webDriver.findElement(By.cssSelector("input[type='submit']"));
+		String value = inputElement.getAttribute("value");
+		assertEquals("ログイン", value);
+
+		// エビデンスを取得する
+		getEvidence(new Object() {
+		});
 	}
 
 	@Test
 	@Order(2)
 	@DisplayName("テスト02 初回ログイン済みの受講生ユーザーでログイン")
 	void test02() {
-		// TODO ここに追加
+		// ログインIDとパスワードの入力欄の要素を取得する
+		WebElement idInput = webDriver.findElement(By.id("loginId"));
+		WebElement passwordInput = webDriver.findElement(By.id("password"));
+
+		// 初回ログイン済みの受講生ユーザーのログインIDとパスワードを入力する
+		idInput.sendKeys("StudentAA03");
+		passwordInput.sendKeys("StudentAA033");
+
+		// ログインボタンの要素を取得し押下する
+		WebElement loginButton = webDriver.findElement(By.cssSelector("input[type='submit']"));
+		loginButton.click();
+
+		// ログイン後、要素が表示されるまで待機する
+		visibilityTimeout(By.cssSelector("a>small"), 60);
+
+		// 表示要素を取得し、正常にログイン出来ていることを確認する
+		WebElement smallElement = webDriver.findElement(By.tagName("small"));
+		assertEquals("ようこそ受講生ＡＡ３さん", smallElement.getText());
+
+		// エビデンスを取得する
+		getEvidence(new Object() {
+		});
 	}
 
 	@Test
 	@Order(3)
 	@DisplayName("テスト03 提出済の研修日の「詳細」ボタンを押下しセクション詳細画面に遷移")
 	void test03() {
-		// TODO ここに追加
+		// 「提出済み」ステータスの研修日にある「詳細」ボタンを特定する
+		String xpathExpression = "//tr[.//span[normalize-space() = '提出済み']]//input[@type='submit' and @value='詳細']";
+
+		// 「詳細」ボタンの要素を取得し押下する
+		WebElement detailsButton = webDriver.findElement(By.xpath(xpathExpression));
+		detailsButton.click();
+
+		// セクション詳細画面が表示されるまで待機する
+		visibilityTimeout(By.id("sectionDetail"), 60);
+
+		// 見出しを取得し、セクション詳細画面に遷移出来ていることを確認する
+		WebElement h3Element1 = webDriver.findElement(By.tagName("h3"));
+		assertEquals("本日の内容", h3Element1.getText());
+
+		// エビデンスを取得する
+		getEvidence(new Object() {
+		});
 	}
 
 	@Test
 	@Order(4)
 	@DisplayName("テスト04 「確認する」ボタンを押下しレポート登録画面に遷移")
 	void test04() {
-		// TODO ここに追加
+		// ボタンの要素を取得し押下する
+		WebElement reportButton = webDriver
+				.findElement(By.cssSelector("input[type='submit'][value='提出済み日報【デモ】を確認する']"));
+		reportButton.click();
+
+		// 見出しを取得しレポート登録画面に遷移できていることを確認する
+		WebElement legendElement = webDriver.findElement(By.tagName("legend"));
+		assertEquals("報告レポート", legendElement.getText());
+
+		// エビデンスを取得する
+		getEvidence(new Object() {
+		});
 	}
 
 	@Test
 	@Order(5)
 	@DisplayName("テスト05 報告内容を修正して「提出する」ボタンを押下しセクション詳細画面に遷移")
 	void test05() {
-		// TODO ここに追加
+		//レポート入力欄の要素を取得し、内容を消去して、新しい内容を入力する
+		WebElement textInput = webDriver.findElement(By.id("content_0"));
+		textInput.clear();
+		textInput.sendKeys("今日も楽しかった。");
+
+		// 「提出する」ボタンの要素を取得し押下する
+		WebElement loginButton = webDriver.findElement(By.cssSelector("button[type='submit']"));
+		loginButton.click();
+
+		visibilityTimeout(By.id("sectionDetail"), 60);
+
+		// 提出済みの日報確認ボタンを取得し、更新されていることを確認する
+		WebElement inputElement = webDriver
+				.findElement(By.cssSelector("input[type='submit'][value='提出済み日報【デモ】を確認する']"));
+		String value = inputElement.getAttribute("value");
+		assertEquals("提出済み日報【デモ】を確認する", value);
+
+		// エビデンスを取得する
+		getEvidence(new Object() {
+		});
 	}
 
 	@Test
 	@Order(6)
 	@DisplayName("テスト06 上部メニューの「ようこそ○○さん」リンクからユーザー詳細画面に遷移")
 	void test06() {
-		// TODO ここに追加
+
+		// ボタンの要素を取得し押下する
+		WebElement loginButton = webDriver.findElement(By.cssSelector("input[type='submit']"));
+		loginButton.click();
+
+		// リンクの要素を取得し押下する
+		WebElement linkButton = webDriver.findElement(By.linkText("ようこそ受講生ＡＡ３さん"));
+		linkButton.click();
+
+		// 見出しを取得し、遷移できていることを確認する
+		WebElement legendElement = webDriver.findElement(By.tagName("h2"));
+		assertEquals("ユーザー詳細", legendElement.getText());
+
+		// エビデンスを取得する
+		getEvidence(new Object() {
+		});
 	}
 
 	@Test
 	@Order(7)
 	@DisplayName("テスト07 該当レポートの「詳細」ボタンを押下しレポート詳細画面で修正内容が反映される")
 	void test07() {
-		// TODO ここに追加
+
+		// 日付とレポート名を条件に、該当レポートの「詳細」ボタンの要素を取得し押下する
+		WebElement detailBtn = webDriver
+				.findElement(
+						By.xpath("//tr[td[normalize-space()='2022年10月1日(土)']"
+								+ " and td[normalize-space()='日報【デモ】']]"
+								+ "//input[@type='submit'and@value='詳細']"));
+		detailBtn.click();
+
+		// 読み込まれるまで待機する
+		pageLoadTimeout(10);
+
+		// 表示されている内容を取得し確認する
+		WebElement reportContent = webDriver
+				.findElement(By.xpath("//th[normalize-space()='本日の報告内容をお書きください。']/following-sibling::td"));
+		assertEquals("今日も楽しかった。", reportContent.getText().trim());
+
+		// エビデンスを取得する
+		getEvidence(new Object() {
+		});
+
 	}
 
 }
