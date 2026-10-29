@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.Select;
 
 /**
  * 結合テスト レポート機能
@@ -86,11 +87,9 @@ public class Case08 {
 	@Order(3)
 	@DisplayName("テスト03 提出済の研修日の「詳細」ボタンを押下しセクション詳細画面に遷移")
 	void test03() {
-		// 「提出済み」ステータスの研修日にある「詳細」ボタンを特定する
-		String xpathExpression = "//tr[.//span[normalize-space() = '提出済み']]//input[@type='submit' and @value='詳細']";
-
-		// 「詳細」ボタンの要素を取得し押下する
-		WebElement detailsButton = webDriver.findElement(By.xpath(xpathExpression));
+		// 「詳細」ボタンを取得して押下する
+		WebElement detailsButton = webDriver.findElement(
+				By.xpath("//tr[td[contains(normalize-space(), '2022年10月2日')]]//input[@type='submit' and @value='詳細']"));
 		detailsButton.click();
 
 		// セクション詳細画面が表示されるまで待機する
@@ -111,12 +110,12 @@ public class Case08 {
 	void test04() {
 		// ボタンの要素を取得し押下する
 		WebElement reportButton = webDriver
-				.findElement(By.cssSelector("input[type='submit'][value='提出済み日報【デモ】を確認する']"));
+				.findElement(By.cssSelector("input[type='submit'][value='提出済み週報【デモ】を確認する']"));
 		reportButton.click();
 
-		// 見出しを取得しレポート登録画面に遷移できていることを確認する
-		WebElement legendElement = webDriver.findElement(By.tagName("legend"));
-		assertEquals("報告レポート", legendElement.getText());
+		// 週報であることを確認する
+		WebElement reportNameElement = webDriver.findElement(By.cssSelector("input[name='reportName']"));
+		assertEquals("週報【デモ】", reportNameElement.getAttribute("value"));
 
 		// エビデンスを取得する
 		getEvidence(new Object() {
@@ -127,22 +126,41 @@ public class Case08 {
 	@Order(5)
 	@DisplayName("テスト05 報告内容を修正して「提出する」ボタンを押下しセクション詳細画面に遷移")
 	void test05() {
-		//レポート入力欄の要素を取得し、内容を消去して、新しい内容を入力する
-		WebElement textInput = webDriver.findElement(By.id("content_0"));
-		textInput.clear();
-		textInput.sendKeys("今日も楽しかった。");
+		// 登録済みの内容を取得し、内容を消去して、新しい内容を入力する
+		WebElement leaningItem = webDriver.findElement(By.id("intFieldName_0"));
+		leaningItem.clear();
+		leaningItem.sendKeys("テスト");
+
+		// 理解度を変更する
+		Select understanding = new Select(webDriver.findElement(By.id("intFieldValue_0")));
+		understanding.selectByVisibleText("2");
+
+		// 目標の達成度を取得し、内容を削除し、新しい内容を取得する
+		WebElement goalAchievement = webDriver.findElement(By.id("content_0"));
+		goalAchievement.clear();
+		goalAchievement.sendKeys("8");
+
+		// 所感を取得し、内容を削除し、新しい内容を取得する
+		WebElement impression = webDriver.findElement(By.id("content_1"));
+		impression.clear();
+		impression.sendKeys("週報入力テスト");
+
+		// 所感を取得し、内容を削除し、新しい内容を取得する
+		WebElement weeklyReflection = webDriver.findElement(By.id("content_2"));
+		weeklyReflection.clear();
+		weeklyReflection.sendKeys("今週でrp2終了");
 
 		// 「提出する」ボタンの要素を取得し押下する
-		WebElement loginButton = webDriver.findElement(By.cssSelector("button[type='submit']"));
-		loginButton.click();
+		WebElement submitButton = webDriver.findElement(By.cssSelector("button[type='submit']"));
+		submitButton.click();
 
 		visibilityTimeout(By.id("sectionDetail"), 60);
 
-		// 提出済みの日報確認ボタンを取得し、更新されていることを確認する
+		// 提出済みの週報確認ボタンを取得し、更新されていることを確認する
 		WebElement inputElement = webDriver
-				.findElement(By.cssSelector("input[type='submit'][value='提出済み日報【デモ】を確認する']"));
+				.findElement(By.cssSelector("input[type='submit'][value='提出済み週報【デモ】を確認する']"));
 		String value = inputElement.getAttribute("value");
-		assertEquals("提出済み日報【デモ】を確認する", value);
+		assertEquals("提出済み週報【デモ】を確認する", value);
 
 		// エビデンスを取得する
 		getEvidence(new Object() {
@@ -179,18 +197,23 @@ public class Case08 {
 		// 日付とレポート名を条件に、該当レポートの「詳細」ボタンの要素を取得し押下する
 		WebElement detailBtn = webDriver
 				.findElement(
-						By.xpath("//tr[td[normalize-space()='2022年10月1日(土)']"
-								+ " and td[normalize-space()='日報【デモ】']]"
+						By.xpath("//tr[td[normalize-space()='2022年10月2日(日)']"
+								+ " and td[normalize-space()='週報【デモ】']]"
 								+ "//input[@type='submit'and@value='詳細']"));
 		detailBtn.click();
 
 		// 読み込まれるまで待機する
 		pageLoadTimeout(10);
 
-		// 表示されている内容を取得し確認する
-		WebElement reportContent = webDriver
-				.findElement(By.xpath("//th[normalize-space()='本日の報告内容をお書きください。']/following-sibling::td"));
-		assertEquals("今日も楽しかった。", reportContent.getText().trim());
+		// 修正した所感を取得し確認する
+		WebElement impression = webDriver
+				.findElement(By.xpath("//th[normalize-space()='所感']/following-sibling::td"));
+		assertEquals("週報入力テスト", impression.getText().trim());
+
+		// 修正した一週間の振り返りを取得し確認する
+		WebElement weeklyReflection = webDriver
+				.findElement(By.xpath("//th[normalize-space()='一週間の振り返り']/following-sibling::td"));
+		assertEquals("今週でrp2終了", weeklyReflection.getText().trim());
 
 		// エビデンスを取得する
 		getEvidence(new Object() {
